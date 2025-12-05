@@ -8,6 +8,11 @@ public class Monster {
     private int defend;
     private int attack;
     private int exp;
+
+    public void setDefend(int defend) {
+        this.defend = defend;
+    }
+
     //受到伤害
     public Monster()
     {
@@ -24,12 +29,12 @@ public class Monster {
     }
     public void takeDamage (int attack) {
         int oldLifeValue = this.LifeValue;
-        int totalattack=defend-attack;
-        if(totalattack>0)
+        int totalattack=attack-defend;
+        if(totalattack<0)
         {
             totalattack=1;
         }
-        this.LifeValue = Math.max(0, this.LifeValue +totalattack); // 血量最低为0
+        this.LifeValue = Math.max(0, oldLifeValue - totalattack); // 血量最低为0
         // 扣血效果显示（MUD风格文本提示）
         System.out.println(name + " 受到 " + attack + " 点伤害！");
         System.out.println("血量变化：" + oldLifeValue + " → " + this.LifeValue);
