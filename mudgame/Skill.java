@@ -3,6 +3,11 @@ package com.mudgame;
 public class Skill {
     private String name;
     private int damageMultiplier;
+
+    public String getDescription() {
+        return description;
+    }
+
     private String description;
 
     public Skill(String name, int damageMultiplier, String description) {
