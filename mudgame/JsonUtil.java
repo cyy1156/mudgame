@@ -107,7 +107,12 @@ public class JsonUtil {
             
             if (npcDtos != null) {
                 for (NpcDTO npcDto : npcDtos) {
-                    npcs.add(new Npc(npcDto.name, npcDto.question, npcDto.answer, npcDto.exp));
+                    if (npcDto.options != null && !npcDto.options.isEmpty()) {
+                        npcs.add(new Npc(npcDto.name, npcDto.question, npcDto.answer, npcDto.exp, npcDto.options, npcDto.dialogue));
+                    } else {
+                        // 兼容旧格式
+                        npcs.add(new Npc(npcDto.name, npcDto.question, npcDto.answer, npcDto.exp));
+                    }
                 }
             }
         } catch (Exception e) {
@@ -181,7 +186,9 @@ public class JsonUtil {
         String question;
         String answer;
         int exp;
-        // 忽略id和dialogue字段（如果存在）
+        String dialogue;
+        List<String> options;
+        // 忽略id字段（如果存在）
     }
 }
 

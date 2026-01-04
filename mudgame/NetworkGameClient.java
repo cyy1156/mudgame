@@ -24,7 +24,7 @@ public class NetworkGameClient {
             System.err.println("Warning: Failed to set UTF-8 encoding: " + e.getMessage());
         }
         NetworkGameClient client = new NetworkGameClient();
-        String serverAddress = "localhost";//在这里进行更改连接主机
+        String serverAddress = "10.42.110.251";//在这里进行更改连接主机10.42.110.251
         int port = 4444;
         
         if (args.length >= 1) {
