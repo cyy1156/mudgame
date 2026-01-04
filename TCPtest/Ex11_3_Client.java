@@ -7,7 +7,8 @@ public class Ex11_3_Client {
     public static void main(String[] args) {
         Socket server = null;
         try {
-            String inputString;
+            //您好
+            Sring inputString;
             server = new Socket("localhost", 4444);// 向本机4444端口发出客户请求
             System.out.println("请输入信息:");
             BufferedReader sin = new BufferedReader(new InputStreamReader(
@@ -39,4 +40,5 @@ public class Ex11_3_Client {
         }
     }
 }// 客户端程序结束
+
 
