@@ -133,4 +133,14 @@ public class Figure {
     {
         LifeValue=MaxLifeValue;
     }
+    
+    // 增加攻击力
+    public void addAttack(int bonus) {
+        attack += bonus;
+    }
+    
+    // 增加防御力
+    public void addDefend(int bonus) {
+        defend += bonus;
+    }
 }
