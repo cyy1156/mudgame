@@ -18,6 +18,8 @@ public class NetworkGameServer {
     private List<Npc> npcs = new ArrayList<>();
     private List<Scene> scenes = new ArrayList<>();
     private Random random = new Random();
+    private TrainingAltar trainingAltar = new TrainingAltar();  // 武林秘籍修炼台（共享资源）
+    private MapManager mapManager = new MapManager();  // 地图管理器
     
     public static void main(String[] args) {
         // 设置控制台输出编码为UTF-8
@@ -79,34 +81,12 @@ public class NetworkGameServer {
     }
     
     private void initializeScenes() {
-        Scene scene1 = new Scene("新手村", "宁静的村庄，适合新手修炼");
-        scene1.addAction("1. 打怪练级");
-        scene1.addAction("2. NPC对话");
-        scenes.add(scene1);
-        
-        Scene scene2 = new Scene("武林广场", "江湖人士聚集地，可以切磋武艺");
-        scene2.addAction("1. 打怪练级");
-        scene2.addAction("2. NPC对话");
-        scene2.addAction("8. PK挑战");
-        scenes.add(scene2);
-        
-        Scene scene3 = new Scene("藏经阁", "存放武学秘籍的地方");
-        scene3.addAction("2. NPC对话");
-        scene3.addAction("3. 查看状态");
-        scenes.add(scene3);
-        
-        Scene scene4 = new Scene("练功房", "专门用于修炼的场所");
-        scene4.addAction("1. 打怪练级");
-        scene4.addAction("3. 查看状态");
-        scenes.add(scene4);
-        
-        Scene scene5 = new Scene("江湖客栈", "休息和交流的地方");
-        scene5.addAction("2. NPC对话");
-        scene5.addAction("6. 查看在线玩家");
-        scene5.addAction("7. 聊天");
-        scenes.add(scene5);
-        
-        System.out.println("已初始化 " + scenes.size() + " 个场景");
+        // 场景初始化已由MapManager完成
+        // 这里只需要从MapManager获取场景列表
+        for (MapManager.SceneNode node : mapManager.getAllScenes()) {
+            scenes.add(node.scene);
+        }
+        System.out.println("已初始化 " + scenes.size() + " 个场景（地图系统已加载）");
     }
     
     public Scene getRandomScene() {
@@ -114,6 +94,14 @@ public class NetworkGameServer {
             return null;
         }
         return scenes.get(random.nextInt(scenes.size()));
+    }
+    
+    public MapManager.SceneNode getRandomSceneNode() {
+        List<MapManager.SceneNode> allNodes = new ArrayList<>(mapManager.getAllScenes());
+        if (allNodes.isEmpty()) {
+            return null;
+        }
+        return allNodes.get(random.nextInt(allNodes.size()));
     }
     
     public List<Scene> getScenes() {
@@ -176,6 +164,14 @@ public class NetworkGameServer {
         }
         return npcs.get(random.nextInt(npcs.size()));
     }
+    
+    public TrainingAltar getTrainingAltar() {
+        return trainingAltar;
+    }
+    
+    public MapManager getMapManager() {
+        return mapManager;
+    }
 }
 
 /**
@@ -189,7 +185,7 @@ class ClientHandler implements Runnable {
     private Figure player;
     private String playerName;
     private boolean running = true;
-    private Scene currentScene;  // 当前所在场景
+    private MapManager.SceneNode currentScene;  // 当前所在场景节点
     
     public ClientHandler(Socket socket, NetworkGameServer server) {
         this.socket = socket;
@@ -250,10 +246,10 @@ class ClientHandler implements Runnable {
             player.name = playerName;
             
             server.registerClient(playerName, this);
-            // 随机分配初始场景
-            currentScene = server.getRandomScene();
+            // 分配初始场景（新手村）
+            currentScene = server.getMapManager().getStartScene();
             out.println("角色创建成功: " + playerName);
-            System.out.println("[客户端连接] " + playerName + " 角色创建成功，已加入游戏，初始场景: " + (currentScene != null ? currentScene.getName() : "无"));
+            System.out.println("[客户端连接] " + playerName + " 角色创建成功，已加入游戏，初始场景: " + (currentScene != null ? currentScene.scene.getName() : "无"));
             sendStatus();
             showMainMenu();
             
@@ -310,13 +306,25 @@ class ClientHandler implements Runnable {
                 case "1":
                 case "battle":
                 case "fight":
-                    System.out.println("[客户端操作] " + playerName + " 开始打怪");
+                    // 检查当前场景是否允许打怪
+                    if (currentScene == null || !currentScene.scene.getAvailableActions().contains("1")) {
+                        out.println("当前场景不允许打怪！请切换到新手村、武林广场或练功房。");
+                        showMainMenu();
+                        return;
+                    }
+                    System.out.println("[客户端操作] " + playerName + " 在 " + currentScene.scene.getName() + " 开始打怪");
                     startBattle();
                     break;
                 case "2":
                 case "npc":
                 case "talk":
-                    System.out.println("[客户端操作] " + playerName + " 与NPC对话");
+                    // 检查当前场景是否允许NPC对话
+                    if (currentScene == null || !currentScene.scene.getAvailableActions().contains("2")) {
+                        out.println("当前场景没有NPC可以对话！请切换到有NPC的场景。");
+                        showMainMenu();
+                        return;
+                    }
+                    System.out.println("[客户端操作] " + playerName + " 在 " + currentScene.scene.getName() + " 与NPC对话");
                     talkToNpc();
                     break;
                 case "3":
@@ -361,6 +369,12 @@ class ClientHandler implements Runnable {
                 case "8":
                 case "pk":
                 case "challenge":
+                    // 检查当前场景是否允许PK
+                    if (currentScene == null || !currentScene.scene.getAvailableActions().contains("8")) {
+                        out.println("当前场景不允许PK！请切换到武林广场。");
+                        showMainMenu();
+                        return;
+                    }
                     if (param.isEmpty()) {
                         out.println("用法: pk <玩家名>");
                         showMainMenu();
@@ -370,7 +384,7 @@ class ClientHandler implements Runnable {
                             out.println("你正在PK中，无法发起新的挑战！");
                             return;
                         }
-                        System.out.println("[客户端操作] " + playerName + " 向 " + param + " 发起PK挑战");
+                        System.out.println("[客户端操作] " + playerName + " 在 " + currentScene.scene.getName() + " 向 " + param + " 发起PK挑战");
                         challengePlayer(param);
                     }
                     break;
@@ -401,6 +415,12 @@ class ClientHandler implements Runnable {
                     System.out.println("[客户端操作] " + playerName + " 切换场景");
                     changeScene();
                     showMainMenu();
+                    break;
+                case "10":
+                case "train":
+                case "altar":
+                    System.out.println("[客户端操作] " + playerName + " 尝试使用修炼台");
+                    useTrainingAltar();
                     break;
                 case "0":
                 case "quit":
@@ -435,33 +455,55 @@ class ClientHandler implements Runnable {
             return;
         }
         
-        // 显示当前场景地图
+        // 显示美化地图
         if (currentScene != null) {
-            out.println("\n" + currentScene.getMapDisplay());
-            out.println("当前位置: " + currentScene.getName());
-            out.println("场景描述: " + currentScene.getDescription());
+            out.println(server.getMapManager().generateMapDisplay(currentScene));
+            out.println("场景描述: " + currentScene.scene.getDescription());
         } else {
-            // 如果没有场景，随机分配一个
-            currentScene = server.getRandomScene();
+            // 如果没有场景，分配初始场景
+            currentScene = server.getMapManager().getStartScene();
             if (currentScene != null) {
-                out.println("\n" + currentScene.getMapDisplay());
-                out.println("当前位置: " + currentScene.getName());
-                out.println("场景描述: " + currentScene.getDescription());
+                out.println(server.getMapManager().generateMapDisplay(currentScene));
+                out.println("场景描述: " + currentScene.scene.getDescription());
             }
         }
         
+        // 根据当前场景显示可用操作
         out.println("\n===== 主菜单 =====");
-        out.println("1. 打怪练级");
-        out.println("2. NPC对话");
+        out.println("【当前场景可用操作】");
+        if (currentScene != null) {
+            List<String> actions = currentScene.scene.getAvailableActions();
+            if (actions.contains("1")) {
+                out.println("1. 打怪练级 ✓");
+            } else {
+                out.println("1. 打怪练级 (当前场景不可用)");
+            }
+            if (actions.contains("2")) {
+                out.println("2. NPC对话 ✓");
+            } else {
+                out.println("2. NPC对话 (当前场景不可用)");
+            }
+            if (actions.contains("8")) {
+                out.println("8. PK挑战 (pk <玩家名>) ✓");
+            }
+        } else {
+            out.println("1. 打怪练级");
+            out.println("2. NPC对话");
+            out.println("8. PK挑战 (pk <玩家名>)");
+        }
+        
+        out.println("\n【通用操作】");
         out.println("3. 查看状态");
         out.println("4. 保存游戏");
         out.println("5. 加载游戏");
         out.println("6. 查看在线玩家");
         out.println("7. 聊天 (chat <消息> 或直接输入消息)");
-        out.println("8. PK挑战 (pk <玩家名>)");
         out.println("9. 切换场景");
+        out.println("10. 武林秘籍修炼台 " + 
+            (server.getTrainingAltar().isOccupied() ? 
+                "[使用中：" + server.getTrainingAltar().getCurrentUser() + "]" : "[可用]"));
         out.println("0. 退出游戏");
-        out.println("请选择(0-9):");
+        out.println("\n请选择操作:");
     }
     
     private void startBattle() {
@@ -756,38 +798,129 @@ class ClientHandler implements Runnable {
     }
     
     private void changeScene() {
-        List<Scene> allScenes = server.getScenes();
-        if (allScenes.isEmpty()) {
-            out.println("没有可用场景！");
+        if (currentScene == null) {
+            currentScene = server.getMapManager().getStartScene();
+        }
+        
+        out.println("\n════════════════════════════════════════════════════════");
+        out.println("                    移动菜单                    ");
+        out.println("════════════════════════════════════════════════════════");
+        out.println("当前位置: " + currentScene.scene.getName());
+        out.println("描述: " + currentScene.scene.getDescription());
+        out.println("\n可移动方向:");
+        
+        List<String> availableDirections = new ArrayList<>();
+        if (currentScene.north != null) {
+            out.println("  ↑ 北 (n/north/上/北) → " + currentScene.north.scene.getName());
+            availableDirections.add("n");
+            availableDirections.add("north");
+            availableDirections.add("上");
+            availableDirections.add("北");
+        }
+        if (currentScene.south != null) {
+            out.println("  ↓ 南 (s/south/下/南) → " + currentScene.south.scene.getName());
+            availableDirections.add("s");
+            availableDirections.add("south");
+            availableDirections.add("下");
+            availableDirections.add("南");
+        }
+        if (currentScene.east != null) {
+            out.println("  → 东 (e/east/右/东) → " + currentScene.east.scene.getName());
+            availableDirections.add("e");
+            availableDirections.add("east");
+            availableDirections.add("右");
+            availableDirections.add("东");
+        }
+        if (currentScene.west != null) {
+            out.println("  ← 西 (w/west/左/西) → " + currentScene.west.scene.getName());
+            availableDirections.add("w");
+            availableDirections.add("west");
+            availableDirections.add("左");
+            availableDirections.add("西");
+        }
+        
+        if (availableDirections.isEmpty()) {
+            out.println("  无可用方向");
+            showMainMenu();
             return;
         }
         
-        out.println("\n===== 场景列表 =====");
-        for (int i = 0; i < allScenes.size(); i++) {
-            Scene scene = allScenes.get(i);
-            String marker = (currentScene != null && scene.getName().equals(currentScene.getName())) ? " [当前]" : "";
-            out.println((i + 1) + ". " + scene.getName() + " - " + scene.getDescription() + marker);
-        }
-        out.println("请选择要前往的场景(1-" + allScenes.size() + "):");
+        out.println("\n════════════════════════════════════════════════════════");
+        out.println("输入方向移动，或输入 'list' 查看所有场景，或输入 'map' 查看地图:");
         
         try {
-            String choiceStr = in.readLine();
-            int choice = Integer.parseInt(choiceStr);
-            if (choice >= 1 && choice <= allScenes.size()) {
-                Scene newScene = allScenes.get(choice - 1);
-                if (currentScene != null && newScene.getName().equals(currentScene.getName())) {
-                    out.println("你已经在 " + newScene.getName() + " 了！");
-                } else {
-                    currentScene = newScene;
-                    System.out.println("[场景切换] " + playerName + " 切换到场景: " + currentScene.getName());
-                    out.println("你已到达 " + currentScene.getName() + "！");
-                    out.println(currentScene.getDescription());
-                }
+            String input = in.readLine();
+            if (input == null || input.trim().isEmpty()) {
+                showMainMenu();
+                return;
+            }
+            
+            input = input.trim().toLowerCase();
+            
+            // 显示所有场景列表
+            if (input.equals("list")) {
+                out.println(server.getMapManager().generateMapLegend());
+                showMainMenu();
+                return;
+            }
+            
+            // 显示地图
+            if (input.equals("map")) {
+                out.println(server.getMapManager().generateMapDisplay(currentScene));
+                showMainMenu();
+                return;
+            }
+            
+            // 尝试方向移动
+            MapManager.SceneNode newScene = server.getMapManager().move(currentScene, input);
+            
+            if (newScene != null) {
+                String oldSceneName = currentScene.scene.getName();
+                currentScene = newScene;
+                System.out.println("[场景切换] " + playerName + " 从 " + oldSceneName + " 移动到: " + currentScene.scene.getName());
+                out.println("\n════════════════════════════════════════════════════════");
+                out.println("你已到达【" + currentScene.scene.getName() + "】");
+                out.println(currentScene.scene.getDescription());
+                out.println("════════════════════════════════════════════════════════");
             } else {
-                out.println("无效选择！");
+                out.println("\n无效的方向！请输入: n/north/上/北, s/south/下/南, e/east/右/东, w/west/左/西");
+                out.println("或输入 'list' 查看所有场景，'map' 查看地图");
             }
         } catch (Exception e) {
-            out.println("切换场景失败: " + e.getMessage());
+            out.println("\n移动失败: " + e.getMessage());
+        }
+    }
+    
+    private void useTrainingAltar() {
+        TrainingAltar altar = server.getTrainingAltar();
+        
+        // 检查是否在战斗或PK中
+        if (isInPvP || isInBattle) {
+            out.println("你正在战斗中，无法使用修炼台！");
+            showMainMenu();
+            return;
+        }
+        
+        // 尝试获取修炼台使用权
+        if (altar.tryStartTraining(playerName)) {
+            System.out.println("[修炼台] " + playerName + " 开始使用修炼台");
+            try {
+                // 执行修炼过程
+                altar.performTraining(player, in, out, server, playerName);
+            } finally {
+                // 确保修炼结束后释放修炼台
+                altar.endTraining();
+                System.out.println("[修炼台] " + playerName + " 结束使用修炼台");
+            }
+            showMainMenu();
+        } else {
+            out.println("\n════════════════════════════════════════════════════════");
+            out.println("修炼台正在被使用中！");
+            out.println("当前使用者：" + altar.getCurrentUser());
+            out.println("请稍后再试...");
+            out.println("════════════════════════════════════════════════════════");
+            System.out.println("[修炼台] " + playerName + " 尝试使用修炼台失败（已被占用：" + altar.getCurrentUser() + "）");
+            showMainMenu();
         }
     }
     
