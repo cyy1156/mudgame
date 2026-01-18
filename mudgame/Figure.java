@@ -53,6 +53,23 @@ public class Figure {
             System.out.println(name + " 已阵亡！");
         }
     }
+    
+    //网络版本的遭受伤害（使用PrintWriter输出）
+    public void takeDamageNetwork(int attack, java.io.PrintWriter out) {
+        int oldLifeValue = this.LifeValue;
+
+        int totalattack = attack - defend;
+        if (totalattack < 0) {
+            totalattack = 1;
+        }
+        this.LifeValue = Math.max(0, oldLifeValue - totalattack); // 血量最低为0
+        // 扣血效果显示（MUD风格文本提示）
+        out.println(name + " 受到 " + attack + " 点伤害！");
+        out.println("血量变化：" + oldLifeValue + " → " + this.LifeValue);
+        if (this.LifeValue == 0) {
+            out.println(name + " 已阵亡！");
+        }
+    }
 
 
     //升级
@@ -115,5 +132,15 @@ public class Figure {
     public void healToFull()
     {
         LifeValue=MaxLifeValue;
+    }
+    
+    // 增加攻击力
+    public void addAttack(int bonus) {
+        attack += bonus;
+    }
+    
+    // 增加防御力
+    public void addDefend(int bonus) {
+        defend += bonus;
     }
 }

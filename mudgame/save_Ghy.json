@@ -1,0 +1,17 @@
+{
+  "name": "ghy",
+  "grade": 2,
+  "exp": 0,
+  "lifeValue": 110,
+  "maxLifeValue": 110,
+  "defend": 5,
+  "attack": 15,
+  "skills": [
+    {
+      "name": "火系突刺",
+      "damageMultiplier": 2,
+      "description": "火焰强化刺击"
+    }
+  ],
+  "roleType": "XiaoYan"
+}
