@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "name": "ghy",
   "grade": 2,
   "exp": 0,
@@ -6,6 +7,15 @@
   "maxLifeValue": 110,
   "defend": 5,
   "attack": 15,
+=======
+  "name": "Ghy",
+  "grade": 1,
+  "exp": 0,
+  "lifeValue": 100,
+  "maxLifeValue": 100,
+  "defend": 5,
+  "attack": 10,
+>>>>>>> e1501ce6d55714bf6aecc1e18dd84acda821f7d9
   "skills": [
     {
       "name": "火系突刺",

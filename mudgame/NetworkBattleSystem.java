@@ -16,7 +16,11 @@ public class NetworkBattleSystem {
         }
     }
 
+<<<<<<< HEAD
     public static void fight(Figure player, Monster monster, ClientHandler handler) {
+=======
+    public static void fight(Figure player, Monster monster, ClientHandler handler, NetworkGameServer server) {
+>>>>>>> e1501ce6d55714bf6aecc1e18dd84acda821f7d9
         PrintWriter out = handler.getOutput();
         BufferedReader in = handler.getInput();
         String playerName = handler.getPlayerName();
@@ -36,7 +40,10 @@ public class NetworkBattleSystem {
 
             try {
                 String choiceStr = in.readLine();
+<<<<<<< HEAD
 
+=======
+>>>>>>> e1501ce6d55714bf6aecc1e18dd84acda821f7d9
                 System.out.println("[战斗系统] " + playerName + " 战斗选择: " + (choiceStr != null ? choiceStr : "空"));
                 int choice = Integer.parseInt(choiceStr);
 
@@ -182,6 +189,7 @@ public class NetworkBattleSystem {
                 out2.printf("%s HP:%d | 你 HP:%d\n", player1.getName(), player1.getLifeValue(), player2.getLifeValue());
 
                 try {
+<<<<<<< HEAD
                     System.out.println("[PK系统] 玩家1 (" + player1Name + ") 开始等待输入...");
                     String choiceStr = in1.readLine();
                     System.out.println("[PK系统] 玩家1 (" + player1Name + ") 收到输入: " + (choiceStr != null ? choiceStr : "null"));
@@ -198,6 +206,14 @@ public class NetworkBattleSystem {
                         choice = Integer.parseInt(choiceStr.trim());
                     } catch (NumberFormatException e) {
                         System.out.println("[PK系统] 玩家1 (" + player1Name + ") 输入格式错误: " + choiceStr);
+=======
+                    String choiceStr = in1.readLine();
+                    System.out.println("[PK系统] " + player1Name + " (PVP回合) 选择: " + (choiceStr != null ? choiceStr : "空"));
+                    int choice;
+                    try {
+                        choice = Integer.parseInt(choiceStr);
+                    } catch (NumberFormatException e) {
+>>>>>>> e1501ce6d55714bf6aecc1e18dd84acda821f7d9
                         out1.println("无效输入！请输入 11 或 12");
                         continue;
                     }
@@ -246,6 +262,7 @@ public class NetworkBattleSystem {
                 out1.printf("%s HP:%d | 你 HP:%d\n", player2.getName(), player2.getLifeValue(), player1.getLifeValue());
 
                 try {
+<<<<<<< HEAD
                     System.out.println("[PK系统] 玩家2 (" + player2Name + ") 开始等待输入...");
                     System.out.println("2");
                     String choiceStr = in2.readLine();
@@ -264,6 +281,14 @@ public class NetworkBattleSystem {
                         choice = Integer.parseInt(choiceStr.trim());
                     } catch (NumberFormatException e) {
                         System.out.println("[PK系统] 玩家2 (" + player2Name + ") 输入格式错误: " + choiceStr);
+=======
+                    String choiceStr = in2.readLine();
+                    System.out.println("[PK系统] " + player2Name + " (PVP回合) 选择: " + (choiceStr != null ? choiceStr : "空"));
+                    int choice;
+                    try {
+                        choice = Integer.parseInt(choiceStr);
+                    } catch (NumberFormatException e) {
+>>>>>>> e1501ce6d55714bf6aecc1e18dd84acda821f7d9
                         out2.println("无效输入！请输入 11 或 12");
                         continue;
                     }
@@ -295,11 +320,17 @@ public class NetworkBattleSystem {
                 } catch (MissCannarinException e) {
                     // 捕获自定义异常，提示用户仅支持11-12
                     out2.println(e.getMessage());
+<<<<<<< HEAD
                     System.out.println("现在输入不是11-12错误");
                     continue;
                 } catch (IOException e) {
                     out2.println("输入错误，请重试");
                     System.out.println("现在输入错误");
+=======
+                    continue;
+                } catch (IOException e) {
+                    out2.println("输入错误，请重试");
+>>>>>>> e1501ce6d55714bf6aecc1e18dd84acda821f7d9
                     continue;
                 }
             }
@@ -314,16 +345,22 @@ public class NetworkBattleSystem {
             System.out.println("[PK系统] PVP战斗结束: " + player2Name + " 获胜，击败了 " + player1Name);
             out1.println("\n========== 你被击败了！ ==========");
             out2.println("\n========== 你获胜了！ ==========");
+<<<<<<< HEAD
             // 两个玩家都回血
             player1.healToFull();
             player2.healToFull();
             player2.gainExp(50); // 获胜奖励经验
             handler1.sendStatus();
+=======
+            player1.healToFull();
+            player2.gainExp(50); // 获胜奖励经验
+>>>>>>> e1501ce6d55714bf6aecc1e18dd84acda821f7d9
             handler2.sendStatus();
         } else if (!player2.isAlive()) {
             System.out.println("[PK系统] PVP战斗结束: " + player1Name + " 获胜，击败了 " + player2Name);
             out2.println("\n========== 你被击败了！ ==========");
             out1.println("\n========== 你获胜了！ ==========");
+<<<<<<< HEAD
             // 两个玩家都回血
             player1.healToFull();
             player2.healToFull();
@@ -334,12 +371,20 @@ public class NetworkBattleSystem {
             // 如果战斗因为其他原因结束（比如连接断开），也要回血
             player1.healToFull();
             player2.healToFull();
+=======
+            player2.healToFull();
+            player1.gainExp(50); // 获胜奖励经验
+            handler1.sendStatus();
+>>>>>>> e1501ce6d55714bf6aecc1e18dd84acda821f7d9
         }
 
         player1.setDefend(player1OldDefend);
         player2.setDefend(player2OldDefend);
 
+<<<<<<< HEAD
         // 显示菜单给两个玩家
+=======
+>>>>>>> e1501ce6d55714bf6aecc1e18dd84acda821f7d9
         handler1.showMainMenu();
         handler2.showMainMenu();
     }

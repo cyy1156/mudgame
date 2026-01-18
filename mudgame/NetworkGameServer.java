@@ -186,7 +186,10 @@ class ClientHandler implements Runnable {
     private String playerName;
     private boolean running = true;
     private MapManager.SceneNode currentScene;  // 当前所在场景节点
+<<<<<<< HEAD
     private BlockingQueue<String> inputQueue = new LinkedBlockingQueue<>(1);  // 输入队列（容量为1，只保留最新输入）
+=======
+>>>>>>> e1501ce6d55714bf6aecc1e18dd84acda821f7d9
     
     public ClientHandler(Socket socket, NetworkGameServer server) {
         this.socket = socket;
@@ -254,6 +257,7 @@ class ClientHandler implements Runnable {
             sendStatus();
             showMainMenu();
             
+<<<<<<< HEAD
             // 启动输入读取线程
             System.out.println("[输入线程] " + playerName + " 准备启动输入读取线程...");
             Thread inputThread = new Thread(() -> {
@@ -310,6 +314,17 @@ class ClientHandler implements Runnable {
                 inputThread.join();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
+=======
+            // 处理客户端消息
+            String input;
+            while (running && (input = in.readLine()) != null) {
+                // 如果正在PK或战斗中，命令由战斗系统处理，这里不处理
+                if (isInPvP || isInBattle) {
+                    // 战斗系统的命令由NetworkBattleSystem直接读取，这里只是占位
+                    continue;
+                }
+                handleCommand(input);
+>>>>>>> e1501ce6d55714bf6aecc1e18dd84acda821f7d9
             }
             
         } catch (IOException e) {
@@ -569,6 +584,7 @@ class ClientHandler implements Runnable {
             out.println("等级: " + monster.getGrade() + ", 血量: " + monster.getLifeValue());
             out.println("战斗开始！");
             
+<<<<<<< HEAD
             // 将PVE战斗也放到独立线程中，保持架构一致性
             ClientHandler handler = this;
             Figure playerRef = this.player;
@@ -593,6 +609,18 @@ class ClientHandler implements Runnable {
             
             // 注意：不要在这里清除isInBattle，因为战斗在独立线程中运行
             // 战斗状态会在战斗线程结束时清除
+=======
+            NetworkBattleSystem.fight(player, monster, this, server);
+            
+            if (player.isAlive()) {
+                System.out.println("[战斗系统] " + playerName + " 战斗胜利，当前血量: " + player.getLifeValue() + "/" + player.getMaxLifeValue());
+            } else {
+                System.out.println("[战斗系统] " + playerName + " 战斗失败，角色阵亡");
+            }
+            
+            isInBattle = false;
+            showMainMenu();
+>>>>>>> e1501ce6d55714bf6aecc1e18dd84acda821f7d9
         } catch (Exception e) {
             isInBattle = false;
             System.out.println("[战斗系统] " + playerName + " 战斗发生错误: " + e.getMessage());
@@ -774,8 +802,13 @@ class ClientHandler implements Runnable {
     }
     
     private ClientHandler pendingChallenge = null;
+<<<<<<< HEAD
     private volatile boolean isInPvP = false;  // 是否正在PK中
     private volatile boolean isInBattle = false;  // 是否正在打怪中
+=======
+    private boolean isInPvP = false;  // 是否正在PK中
+    private boolean isInBattle = false;  // 是否正在打怪中
+>>>>>>> e1501ce6d55714bf6aecc1e18dd84acda821f7d9
     
     public void setPendingChallenge(ClientHandler challenger) {
         this.pendingChallenge = challenger;
@@ -803,7 +836,11 @@ class ClientHandler implements Runnable {
     
     public void acceptChallenge() {
         if (pendingChallenge != null) {
+<<<<<<< HEAD
             // 检查自己是否在PK中或战斗中（被挑战者）
+=======
+            // 检查自己是否在PK中或战斗中
+>>>>>>> e1501ce6d55714bf6aecc1e18dd84acda821f7d9
             if (isInPvP || isInBattle) {
                 out.println("你正在战斗中，无法接受挑战！");
                 pendingChallenge.out.println(playerName + " 正在战斗中，无法接受挑战。");
@@ -820,6 +857,7 @@ class ClientHandler implements Runnable {
                 return;
             }
             
+<<<<<<< HEAD
             // 先清空两个玩家的输入队列，避免残留数据影响PK（特别是第二个玩家的"accept"命令）
             this.clearInputQueue();
             pendingChallenge.clearInputQueue();
@@ -895,6 +933,24 @@ class ClientHandler implements Runnable {
             
             // 注意：不要在这里清除PK状态，因为战斗在独立线程中运行
             // PK状态会在战斗线程结束时清除
+=======
+            // 设置PK状态
+            this.isInPvP = true;
+            pendingChallenge.isInPvP = true;
+            
+            System.out.println("[PK系统] " + playerName + " 接受了 " + pendingChallenge.playerName + " 的PK挑战，开始PVP战斗");
+            out.println("你接受了 " + pendingChallenge.playerName + " 的挑战！");
+            pendingChallenge.out.println(playerName + " 接受了你的挑战！");
+            NetworkBattleSystem.playerVsPlayer(pendingChallenge.player, this.player, 
+                                              pendingChallenge, this, server);
+            System.out.println("[PK系统] " + playerName + " 与 " + pendingChallenge.playerName + " 的PVP战斗结束");
+            
+            // 清除PK状态
+            this.isInPvP = false;
+            pendingChallenge.isInPvP = false;
+            pendingChallenge = null;
+            this.pendingChallenge = null;
+>>>>>>> e1501ce6d55714bf6aecc1e18dd84acda821f7d9
         }
     }
     
@@ -903,6 +959,7 @@ class ClientHandler implements Runnable {
     }
     
     public BufferedReader getInput() {
+<<<<<<< HEAD
         // 返回一个包装的BufferedReader，在战斗模式下从队列读取
         // 注意：这个方法在战斗开始时被调用一次，返回的BufferedReader会被战斗系统持续使用
         return new BufferedReader(new InputStreamReader(new InputStream() {
@@ -946,6 +1003,9 @@ class ClientHandler implements Runnable {
                 return null;
             }
         };
+=======
+        return in;
+>>>>>>> e1501ce6d55714bf6aecc1e18dd84acda821f7d9
     }
     
     public PrintWriter getOutput() {
@@ -960,6 +1020,7 @@ class ClientHandler implements Runnable {
         return playerName;
     }
     
+<<<<<<< HEAD
     /**
      * 清空输入队列（用于PK开始时清理残留数据）
      */
@@ -968,6 +1029,8 @@ class ClientHandler implements Runnable {
         System.out.println("[输入队列] " + playerName + " 输入队列已清空");
     }
     
+=======
+>>>>>>> e1501ce6d55714bf6aecc1e18dd84acda821f7d9
     private void changeScene() {
         if (currentScene == null) {
             currentScene = server.getMapManager().getStartScene();
